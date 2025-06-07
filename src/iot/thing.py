@@ -116,9 +116,20 @@ class Thing:
         }
 
     def invoke(self, command: Dict) -> Any:
-        method_name = command.get("method")
-        if method_name not in self.methods:
-            raise ValueError(f"方法不存在: {method_name}")
+        # 工具调用前恢复唤醒词检测
+        from src.application import Application
+        app = Application.get_instance()
+        if hasattr(app, "wake_word_detector") and app.wake_word_detector and app.wake_word_detector.paused:
+            app.wake_word_detector.resume()
+        try:
+            method_name = command.get("method")
+            if method_name not in self.methods:
+                raise ValueError(f"方法不存在: {method_name}")
 
-        parameters = command.get("parameters", {})
-        return self.methods[method_name].invoke(parameters)
+            parameters = command.get("parameters", {})
+            result = self.methods[method_name].invoke(parameters)
+        finally:
+            # 工具调用后暂停唤醒词检测
+            if hasattr(app, "wake_word_detector") and app.wake_word_detector and app.wake_word_detector.is_running():
+                app.wake_word_detector.pause()
+        return result

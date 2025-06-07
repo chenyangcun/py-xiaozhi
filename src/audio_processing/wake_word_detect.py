@@ -71,14 +71,16 @@ class WakeWordDetector:
             logger.info(f"加载语音识别模型: {model_path}")
             SetLogLevel(-1)
             self.model = Model(model_path=model_path)
-            self.recognizer = KaldiRecognizer(self.model, self.sample_rate)
-            self.recognizer.SetWords(True)
+            logger.info(f"wake_words: {json.dumps(self.wake_words,ensure_ascii=False)}, {json.dumps(self.wake_words_pinyin)}")
+            keywords = json.dumps(self.wake_words,ensure_ascii=False)
+            self.recognizer = KaldiRecognizer(self.model, self.sample_rate, keywords )
+            #self.recognizer.SetWords(True)
             logger.info("模型加载完成")
 
             # 调试日志
             logger.info(f"已配置 {len(self.wake_words)} 个唤醒词")
             for idx, (word, pinyin) in enumerate(zip(self.wake_words, self.wake_words_pinyin)):
-                logger.debug(f"唤醒词 {idx+1}: {word.ljust(8)} => {pinyin}")
+                logger.info(f"唤醒词 {idx+1}: {word.ljust(8)} => {pinyin}")
                 
         except Exception as e:
             logger.error(f"初始化失败: {e}", exc_info=True)
@@ -498,8 +500,8 @@ class WakeWordDetector:
         """唤醒词检查（优化拼音匹配）"""
         text_pinyin = ''.join(lazy_pinyin(text)).replace(' ', '')
         for word, pinyin in zip(self.wake_words, self.wake_words_pinyin):
-            if pinyin in text_pinyin:
-                logger.info(f"检测到唤醒词 '{word}' (匹配拼音: {pinyin})")
+            if pinyin.replace(' ', '') in text_pinyin:
+                #logger.info(f"检测到唤醒词 '{word}' (匹配拼音: {pinyin})")
                 self._trigger_callbacks(word, text)
                 self.recognizer.Reset()
                 return

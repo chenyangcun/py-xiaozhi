@@ -670,11 +670,11 @@ class Application:
                 self.wake_word_detector.resume()
             # 暂停唤醒词检测（添加安全检查）
             # if self.wake_word_detector and hasattr(self.wake_word_detector, 'is_running') and self.wake_word_detector.is_running():
-                # self.wake_word_detector.pause()
-                # logger.info("唤醒词检测已暂停")
+            #    self.wake_word_detector.pause()
+            #    logger.info("唤醒词检测已暂停")
             # 暂停音频输入流以避免自我监听
-            # if self.audio_codec and not self.audio_codec.is_input_paused():
-            #     self.audio_codec.pause_input()
+            #if self.audio_codec and not self.audio_codec.is_input_paused():
+               #self.audio_codec.pause_input()
 
         # 通知状态变化
         for callback in self.on_state_changed_callbacks:
@@ -1054,15 +1054,18 @@ class Application:
             return
 
         try:
-            from src.audio_processing.wake_word_detect import WakeWordDetector
+            #from src.audio_processing.wake_word_detect import WakeWordDetector
+            from src.audio_processing.snowboy_wake_word_detector import SnowboyWakeWordDetector
 
             # 创建检测器实例
-            self.wake_word_detector = WakeWordDetector()
-
+            # self.wake_word_detector = WakeWordDetector()
+            model_paths = ["snowboy_resources/nezha2.pmdl"]
+            sensitivity = 0.41
+            self.wake_word_detector = SnowboyWakeWordDetector(model_paths, sensitivity)
             # 如果唤醒词检测器被禁用（内部故障），则更新配置
             if not getattr(self.wake_word_detector, 'enabled', True):
                 logger.warning("唤醒词检测器被禁用（内部故障）")
-                self.config.update_config("WAKE_WORD_OPTIONS.USE_WAKE_WORD", False)
+                #self.config.update_config("WAKE_WORD_OPTIONS.USE_WAKE_WORD", False)
                 self.wake_word_detector = None
                 return
 
@@ -1085,7 +1088,7 @@ class Application:
             logger.error(traceback.format_exc())
 
             # 禁用唤醒词功能，但不影响程序其他功能
-            self.config.update_config("WAKE_WORD_OPTIONS.USE_WAKE_WORD", False)
+            # self.config.update_config("WAKE_WORD_OPTIONS.USE_WAKE_WORD", False)
             logger.info("由于初始化失败，唤醒词功能已禁用，但程序将继续运行")
             self.wake_word_detector = None
 
